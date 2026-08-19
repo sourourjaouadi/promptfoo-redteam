@@ -1,0 +1,8 @@
+node_modules/
+data/results.db
+.env
+.DS_Store
+dist/
+build/
+npm-debug.log*
+results/

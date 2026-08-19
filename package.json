@@ -1,0 +1,31 @@
+{
+  "name": "promptfoo-redteam",
+  "version": "1.0.0",
+  "description": "Enterprise Red Teaming Framework for LLM Security Testing",
+  "main": "src/api.js",
+  "scripts": {
+    "server": "node src/api.js",
+    "test:injection": "npx promptfoo eval --config config/injection.yaml",
+    "test:all": "npx promptfoo eval --config config/injection.yaml",
+    "test:advanced": "node promptfoo-advanced-v2.js",
+    "start": "node src/api.js"
+  },
+  "keywords": ["security", "red-teaming", "llm"],
+  "author": "Sourour",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "promptfoo": "^0.120.0",
+    "sqlite3": "^5.1.7",
+    "uuid": "^9.0.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.0",
+    "json2csv": "^6.0.0",
+    "csv-parser": "^3.0.0"
+  }
+}

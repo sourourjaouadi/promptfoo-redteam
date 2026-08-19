@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Red Teaming Dashboard</title>
+  <style>
+    body { font-family: monospace; background: #1e1e1e; color: #ddd; margin: 0; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #00ff00; }
+    .button { background: #00ff00; color: #000; padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; }
+    .button:hover { background: #00cc00; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+    .stat-box { background: #2a2a2a; padding: 15px; border-left: 3px solid #00ff00; }
+    .stat-value { font-size: 24px; font-weight: bold; color: #00ff00; }
+    .stat-label { font-size: 12px; color: #999; }
+    .results-table { background: #2a2a2a; width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .results-table th { background: #1a1a1a; padding: 10px; text-align: left; border-bottom: 1px solid #00ff00; }
+    .results-table td { padding: 10px; border-bottom: 1px solid #333; }
+    .pass { color: #00ff00; }
+    .fail { color: #ff0000; }
+    .loading { text-align: center; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Red Teaming Dashboard</h1>
+    
+    <button class="button" onclick="runTests()">Run Tests</button>
+    
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">Total Runs</div>
+        <div class="stat-value" id="totalRuns">-</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Avg Success Rate</div>
+        <div class="stat-value" id="avgRate">-</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Avg Duration</div>
+        <div class="stat-value" id="avgDuration">-</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Last Run</div>
+        <div class="stat-value" id="lastRun">-</div>
+      </div>
+    </div>
+
+    <h2>Test Runs</h2>
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Total</th>
+          <th>Passed</th>
+          <th>Failed</th>
+          <th>Success Rate</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody id="runsTable">
+        <tr><td colspan="6" class="loading">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    function loadMetrics() {
+      fetch('/api/metrics')
+        .then(r => r.json())
+        .then(data => {
+          if (data.data) {
+            document.getElementById('totalRuns').textContent = data.data.total_runs || 0;
+            document.getElementById('avgRate').textContent = data.data.avg_success_rate ? Math.round(data.data.avg_success_rate) + '%' : '-';
+            document.getElementById('avgDuration').textContent = data.data.avg_duration ? Math.round(data.data.avg_duration) + 'ms' : '-';
+            document.getElementById('lastRun').textContent = data.data.last_run ? new Date(data.data.last_run).toLocaleString() : '-';
+          }
+        });
+    }
+
+    function loadRuns() {
+      fetch('/api/tests/history')
+        .then(r => r.json())
+        .then(data => {
+          const table = document.getElementById('runsTable');
+          table.innerHTML = '';
+          if (data.data && data.data.length > 0) {
+            data.data.forEach(run => {
+              const row = table.insertRow();
+              row.innerHTML = `
+                <td>${new Date(run.timestamp).toLocaleString()}</td>
+                <td>${run.total_tests}</td>
+                <td class="pass">${run.passed}</td>
+                <td class="fail">${run.failed}</td>
+                <td>${Math.round(run.success_rate)}%</td>
+                <td>${run.duration_ms}ms</td>
+              `;
+            });
+          } else {
+            table.innerHTML = '<tr><td colspan="6" class="loading">No test runs yet</td></tr>';
+          }
+        });
+    }
+
+    function runTests() {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Running...';
+      
+      fetch('/api/tests/run', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          alert('Tests complete: ' + data.data.passed + ' passed, ' + data.data.failed + ' failed');
+          loadMetrics();
+          loadRuns();
+        })
+        .catch(e => alert('Error: ' + e.message))
+        .finally(() => {
+          btn.disabled = false;
+          btn.textContent = 'Run Tests';
+        });
+    }
+
+    loadMetrics();
+    loadRuns();
+    setInterval(() => { loadMetrics(); loadRuns(); }, 5000);
+  </script>
+</body>
+</html>
