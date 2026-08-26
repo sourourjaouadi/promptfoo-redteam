@@ -11,7 +11,7 @@
 <p align="center">
   <b>An enterprise-grade, research-quality security evaluation and red teaming platform for Large Language Models (LLMs).</b>
   <br />
-  Benchmarking model robustness against <b>30+ advanced attack vectors</b>, evaluating guardrail efficacy, and generating compliance-ready vulnerability reports aligned with OWASP LLM Top 10 & NIST AI RMF.
+  Benchmarking model robustness against <b>52+ advanced attack vectors</b>, evaluating guardrail efficacy, and generating compliance-ready vulnerability reports aligned with OWASP LLM Top 10 & NIST AI RMF.
 </p>
 
 ---
