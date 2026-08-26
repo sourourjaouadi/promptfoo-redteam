@@ -1,0 +1,39 @@
+models:
+  - id: llama2
+    name: "Llama 2 (7B)"
+    provider: ollama
+    endpoint: "http://localhost:11434/api/generate"
+    model_name: "llama2"
+    type: local
+
+  - id: mistral
+    name: "Mistral (7B)"
+    provider: ollama
+    endpoint: "http://localhost:11434/api/generate"
+    model_name: "mistral"
+    type: local
+
+  - id: neural-chat
+    name: "Neural Chat (7B)"
+    provider: ollama
+    endpoint: "http://localhost:11434/api/generate"
+    model_name: "neural-chat"
+    type: local
+
+  - id: gpt-4
+    name: "OpenAI GPT-4"
+    provider: openai
+    model_name: "gpt-4"
+    type: cloud
+
+  - id: gpt-3.5-turbo
+    name: "OpenAI GPT-3.5 Turbo"
+    provider: openai
+    model_name: "gpt-3.5-turbo"
+    type: cloud
+
+  - id: claude-2
+    name: "Anthropic Claude 2"
+    provider: anthropic
+    model_name: "claude-2"
+    type: cloud
