@@ -199,6 +199,10 @@ app.get('/api/tests/:runId', authenticateJWT, async (req, res) => {
   }
 });
 
+const AdversarialAgent = require('./services/adversarialAgent');
+const { inspectPrompt, sanitizeResponse, llmFirewallMiddleware } = require('./middleware/llmFirewall');
+const { generatePDFReport } = require('./services/pdfReport');
+
 app.get('/api/analytics/research', authenticateJWT, async (req, res) => {
   try {
     const runs = await getTestRuns(1);
@@ -210,6 +214,36 @@ app.get('/api/analytics/research', authenticateJWT, async (req, res) => {
     res.json({ status: 'success', data: researchStats });
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
+// New Endpoint: Multi-Turn Adversarial Agent Execution
+app.post('/api/eval/multi-turn', authenticateJWT, async (req, res) => {
+  try {
+    const { goal, maxTurns, model } = req.body;
+    const agent = new AdversarialAgent(OLLAMA_URL, model || 'llama2');
+    const result = await agent.runMultiTurnAttack(goal || 'bypass system safety rules', maxTurns || 5);
+    await logAudit(req.user?.username || 'admin', 'MULTI_TURN_ATTACK_RUN', { goal, isJailbroken: result.isJailbroken });
+    res.json({ status: 'success', data: result });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
+// New Endpoint: Active LLM Firewall Inspection
+app.post('/api/firewall/inspect', (req, res) => {
+  const { prompt } = req.body;
+  const result = inspectPrompt(prompt);
+  res.json({ status: 'success', data: result });
+});
+
+// New Endpoint: Executive PDF Report Exporter
+app.get('/api/reports/pdf', async (req, res) => {
+  try {
+    const metrics = await getMetrics();
+    generatePDFReport({ metrics }, res);
+  } catch (error) {
+    res.status(500).send("Error generating PDF report");
   }
 });
 

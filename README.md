@@ -196,6 +196,9 @@ The platform exposes an enterprise REST API for automation and CI/CD integration
 | `GET` | `/metrics` | Prometheus metrics scrape target | No |
 | `GET` | `/api/v1/eval/results` | Retrieve historical security evaluation logs | Yes (JWT) |
 | `POST` | `/api/v1/eval/run` | Trigger an automated red team evaluation sweep | Yes (JWT) |
+| `POST` | `/api/eval/multi-turn` | Execute Multi-Turn Adversarial (Crescendo/PAIR) agent sweep | Yes (JWT) |
+| `POST` | `/api/firewall/inspect` | Inspect incoming prompt via Active LLM Firewall | No |
+| `GET` | `/api/reports/pdf` | Download Executive PDF Vulnerability Assessment Report | No |
 | `GET` | `/api/v1/audit/logs` | Fetch system security audit trail (`audit_log`) | Yes (RBAC Admin) |
 | `POST` | `/api/v1/auth/login` | Authenticate user and receive JWT access token | No |
 

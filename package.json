@@ -10,7 +10,11 @@
     "test:advanced": "node promptfoo-advanced-v2.js",
     "start": "node src/api.js"
   },
-  "keywords": ["security", "red-teaming", "llm"],
+  "keywords": [
+    "security",
+    "red-teaming",
+    "llm"
+  ],
   "author": "Sourour",
   "license": "MIT",
   "dependencies": {
@@ -18,14 +22,15 @@
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "pdfkit": "^0.20.1",
     "promptfoo": "^0.120.0",
     "sqlite3": "^5.1.7",
     "uuid": "^9.0.0",
     "winston": "^3.11.0"
   },
   "devDependencies": {
+    "csv-parser": "^3.0.0",
     "dotenv": "^16.0.0",
-    "json2csv": "^6.0.0",
-    "csv-parser": "^3.0.0"
+    "json2csv": "^5.0.7"
   }
 }
