@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Ready" />
   <img src="https://img.shields.io/badge/OWASP-LLM_Top_10-DC382D?style=for-the-badge&logo=owasp&logoColor=white" alt="OWASP LLM Top 10" />
   <img src="https://img.shields.io/badge/Node.js-%3E%3D18.0.0-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js Version" />
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License: MIT" />
+
 </p>
 
 <p align="center">
@@ -256,11 +256,7 @@ promptfoo-redteam/
 
 ---
 
-## 🔒 Security Policy & Disclosure
 
-If you discover a security vulnerability within this project, please **do not open a public issue**. Contact the maintainer directly at **security@promptfoo-redteam.org** or submit a private security advisory on GitHub.
-
----
 
 ## 📄 License
 
