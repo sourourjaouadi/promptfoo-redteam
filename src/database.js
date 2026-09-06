@@ -70,7 +70,40 @@ function initDatabase() {
         safety_score REAL,
         total_evaluations INTEGER,
         last_tested DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`, (err) => { if (err) reject(err); else resolve(); });
+      )`, (err) => { if (err) reject(err); });
+
+      // Check and apply migrations for existing databases
+      db.all("PRAGMA table_info(test_runs)", (err, rows) => {
+        if (err) return reject(err);
+        const columns = rows.map(r => r.name);
+        if (!columns.includes('model_id')) {
+          db.run("ALTER TABLE test_runs ADD COLUMN model_id TEXT DEFAULT 'llama2'");
+        }
+        if (!columns.includes('cvss_avg')) {
+          db.run("ALTER TABLE test_runs ADD COLUMN cvss_avg REAL DEFAULT 0.0");
+        }
+      });
+
+      db.all("PRAGMA table_info(test_results)", (err, rows) => {
+        if (err) return reject(err);
+        const columns = rows.map(r => r.name);
+        if (!columns.includes('cvss_score')) {
+          db.run("ALTER TABLE test_results ADD COLUMN cvss_score REAL DEFAULT 0.0");
+        }
+        if (!columns.includes('severity')) {
+          db.run("ALTER TABLE test_results ADD COLUMN severity TEXT DEFAULT 'LOW'");
+        }
+        if (!columns.includes('cvss_vector')) {
+          db.run("ALTER TABLE test_results ADD COLUMN cvss_vector TEXT");
+        }
+        if (!columns.includes('owasp_id')) {
+          db.run("ALTER TABLE test_results ADD COLUMN owasp_id TEXT");
+        }
+        if (!columns.includes('nist_ref')) {
+          db.run("ALTER TABLE test_results ADD COLUMN nist_ref TEXT");
+        }
+        resolve();
+      });
     });
   });
 }

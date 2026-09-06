@@ -105,7 +105,7 @@ if [ ! -f "package.json" ]; then
   "license": "MIT",
   "devDependencies": {
     "dotenv": "^16.0.0",
-    "json2csv": "^6.0.0",
+    "json2csv": "^5.0.7",
     "axios": "^1.4.0",
     "csv-parser": "^3.0.0"
   }

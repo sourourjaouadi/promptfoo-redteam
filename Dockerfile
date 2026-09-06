@@ -2,7 +2,7 @@
 FROM node:18-alpine
 
 # Install curl and jq for healthchecks and provider scripts
-RUN apk add --no-舆-cache curl jq python3 make g++
+RUN apk add --no-cache curl jq python3 make g++
 
 WORKDIR /app
 
