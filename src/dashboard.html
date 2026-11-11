@@ -1,128 +1,173 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <title>Red Teaming Dashboard</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLM Red Team Dashboard</title>
   <style>
-    body { font-family: monospace; background: #1e1e1e; color: #ddd; margin: 0; padding: 20px; }
-    .container { max-width: 1200px; margin: 0 auto; }
-    h1 { color: #00ff00; }
-    .button { background: #00ff00; color: #000; padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; }
-    .button:hover { background: #00cc00; }
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
-    .stat-box { background: #2a2a2a; padding: 15px; border-left: 3px solid #00ff00; }
-    .stat-value { font-size: 24px; font-weight: bold; color: #00ff00; }
-    .stat-label { font-size: 12px; color: #999; }
-    .results-table { background: #2a2a2a; width: 100%; border-collapse: collapse; margin: 20px 0; }
-    .results-table th { background: #1a1a1a; padding: 10px; text-align: left; border-bottom: 1px solid #00ff00; }
-    .results-table td { padding: 10px; border-bottom: 1px solid #333; }
-    .pass { color: #00ff00; }
-    .fail { color: #ff0000; }
-    .loading { text-align: center; color: #999; }
+    :root { color-scheme: dark; font: 15px system-ui, sans-serif; background: #111827; color: #e5e7eb; }
+    body { margin: 0; padding: 24px; }
+    main { max-width: 1200px; margin: auto; }
+    h1, h2 { color: #f9fafb; }
+    button { background: #34d399; color: #052e23; border: 0; border-radius: 6px; padding: 10px 16px; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #message { min-height: 1.5em; color: #fbbf24; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 20px 0; }
+    .card, section { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 16px; }
+    .label { color: #9ca3af; font-size: 13px; }
+    .value { font-size: 24px; font-weight: 700; margin-top: 6px; }
+    .hint { color: #9ca3af; font-size: 13px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { text-align: left; vertical-align: top; padding: 10px; border-bottom: 1px solid #374151; }
+    th { color: #9ca3af; }
+    tr[data-run-id] { cursor: pointer; }
+    tr[data-run-id]:hover { background: #273449; }
+    .passed { color: #34d399; } .failed { color: #f87171; }
+    .inconclusive, .error { color: #fbbf24; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0; font: inherit; }
+    @media (max-width: 600px) { body { padding: 14px; } th, td { padding: 7px; } }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Red Teaming Dashboard</h1>
-    
-    <button class="button" onclick="runTests()">Run Tests</button>
-    
-    <div class="stats">
-      <div class="stat-box">
-        <div class="stat-label">Total Runs</div>
-        <div class="stat-value" id="totalRuns">-</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Avg Success Rate</div>
-        <div class="stat-value" id="avgRate">-</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Avg Duration</div>
-        <div class="stat-value" id="avgDuration">-</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Last Run</div>
-        <div class="stat-value" id="lastRun">-</div>
-      </div>
-    </div>
-
-    <h2>Test Runs</h2>
-    <table class="results-table">
-      <thead>
-        <tr>
-          <th>Timestamp</th>
-          <th>Total</th>
-          <th>Passed</th>
-          <th>Failed</th>
-          <th>Success Rate</th>
-          <th>Duration</th>
-        </tr>
-      </thead>
-      <tbody id="runsTable">
-        <tr><td colspan="6" class="loading">Loading...</td></tr>
-      </tbody>
-    </table>
+<main>
+  <h1>LLM Red Team Dashboard</h1>
+  <p class="hint">Results combine phrase screening with a separate local judge. Without a distinct judge model, results remain inconclusive. Human review is still required.</p>
+  <button id="runButton" type="button">Run Tests</button>
+  <div id="message" role="status" aria-live="polite"></div>
+  <div class="stats">
+    <div class="card"><div class="label">Total Runs</div><div class="value" id="totalRuns">—</div></div>
+    <div class="card"><div class="label">Average Pass Rate*</div><div class="value" id="avgRate">—</div></div>
+    <div class="card"><div class="label">Average Duration</div><div class="value" id="avgDuration">—</div></div>
+    <div class="card"><div class="label">Last Run</div><div class="value" id="lastRun">—</div></div>
   </div>
+  <p class="hint">*Calculated from conclusive pass/fail checks; inconclusive and request errors are counted separately.</p>
+  <section>
+    <h2>Test Runs</h2>
+    <p class="hint">Select a run to inspect its prompts, complete responses, and evaluation reasons.</p>
+    <div class="table-wrap"><table><thead><tr><th>Timestamp</th><th>Target / judge</th><th>Total tests</th><th>Passed</th><th>Failed</th><th>Inconclusive</th><th>Errors</th><th>Pass rate*</th><th>Duration</th></tr></thead>
+      <tbody id="runsTable"><tr><td colspan="9">Loading…</td></tr></tbody></table></div>
+  </section>
+  <section>
+    <h2 id="detailHeading">Test details</h2>
+    <p id="runMetadata" class="hint"></p>
+    <div class="table-wrap"><table><thead><tr><th>Category / Test</th><th>Automated status</th><th>Prompt and model response</th><th>Evaluator evidence</th><th>Human review</th></tr></thead>
+      <tbody id="detailsTable"><tr><td colspan="5">Select a run to view its results.</td></tr></tbody></table></div>
+  </section>
+</main>
+<script>
+  const message = document.getElementById('message');
+  const runButton = document.getElementById('runButton');
+  const runsTable = document.getElementById('runsTable');
+  const detailsTable = document.getElementById('detailsTable');
+  const detailsHeading = document.getElementById('detailHeading');
+  const runMetadata = document.getElementById('runMetadata');
 
-  <script>
-    function loadMetrics() {
-      fetch('/api/metrics')
-        .then(r => r.json())
-        .then(data => {
-          if (data.data) {
-            document.getElementById('totalRuns').textContent = data.data.total_runs || 0;
-            document.getElementById('avgRate').textContent = data.data.avg_success_rate ? Math.round(data.data.avg_success_rate) + '%' : '-';
-            document.getElementById('avgDuration').textContent = data.data.avg_duration ? Math.round(data.data.avg_duration) + 'ms' : '-';
-            document.getElementById('lastRun').textContent = data.data.last_run ? new Date(data.data.last_run).toLocaleString() : '-';
-          }
-        });
+  async function getJson(url, options) {
+    const response = await fetch(url, options);
+    const payload = await response.json();
+    if (!response.ok || payload.status === 'error') throw new Error(payload.message || `Request failed (${response.status})`);
+    return payload.data;
+  }
+  function cell(row, value, className) {
+    const td = document.createElement('td');
+    td.textContent = value == null ? '—' : String(value);
+    if (className) td.className = className;
+    row.appendChild(td);
+    return td;
+  }
+  async function loadMetrics() {
+    const metrics = await getJson('/api/metrics');
+    document.getElementById('totalRuns').textContent = metrics.total_runs || 0;
+    document.getElementById('avgRate').textContent = metrics.avg_success_rate == null ? '—' : `${Math.round(metrics.avg_success_rate)}%`;
+    document.getElementById('avgDuration').textContent = metrics.avg_duration == null ? '—' : `${Math.round(metrics.avg_duration)} ms`;
+    document.getElementById('lastRun').textContent = metrics.last_run ? new Date(metrics.last_run + 'Z').toLocaleString() : '—';
+  }
+  async function showRun(runId) {
+    detailsHeading.textContent = `Test details — ${runId}`;
+    runMetadata.textContent = '';
+    detailsTable.replaceChildren();
+    const [results, runs] = await Promise.all([
+      getJson(`/api/tests/${encodeURIComponent(runId)}`), getJson('/api/tests/history')
+    ]);
+    const run = runs.find((item) => item.id === runId);
+    if (run) runMetadata.textContent = `Target: ${run.model_name || 'unknown'} | Judge: ${run.judge_name || 'not configured'} | Suite version: ${run.suite_version || 1} | Policy SHA-256: ${(run.system_prompt_hash || '').slice(0, 16)}...`;
+    if (!results.length) { cell(detailsTable.insertRow(), 'No results recorded.', '').colSpan = 5; return; }
+    for (const result of results) {
+      const row = detailsTable.insertRow();
+      cell(row, `${result.category} — ${result.name}`);
+      cell(row, result.status, result.status);
+      const content = cell(row, '');
+      const prompt = document.createElement('pre'); prompt.textContent = `Prompt: ${result.prompt || ''}`;
+      const response = document.createElement('pre'); response.textContent = `Response: ${result.response || '(no response)'}`;
+      content.append(prompt, response);
+      const evaluation = cell(row, '');
+      const decision = document.createElement('div'); decision.textContent = `Decision: ${result.reason || '—'}`;
+      const screen = document.createElement('div'); screen.textContent = `Phrase screen: ${result.heuristic_status || 'unavailable'}`;
+      const judge = document.createElement('div');
+      const confidence = result.judge_confidence == null ? '' : ` (${Math.round(result.judge_confidence * 100)}% confidence)`;
+      judge.textContent = `Judge: ${result.judge_verdict || 'unavailable'}${confidence}`;
+      const evidence = document.createElement('pre'); evidence.textContent = result.evidence ? `Evidence: ${result.evidence}` : 'Evidence quote: none';
+      evaluation.append(decision, screen, judge, evidence);
+
+      const review = cell(row, '');
+      const select = document.createElement('select');
+      select.setAttribute('aria-label', `Human review status for ${result.name}`);
+      for (const [value, label] of [
+        ['needs_review', 'Needs review'], ['confirmed_issue', 'Confirmed issue'],
+        ['false_positive', 'False positive'], ['acceptable', 'Acceptable'], ['follow_up', 'Follow up']
+      ]) {
+        const option = document.createElement('option'); option.value = value; option.textContent = label;
+        select.appendChild(option);
+      }
+      select.value = result.review_status || 'needs_review';
+      const note = document.createElement('textarea');
+      note.maxLength = 2000; note.rows = 3; note.placeholder = 'Reviewer notes / evidence';
+      note.setAttribute('aria-label', `Reviewer note for ${result.name}`);
+      note.value = result.review_note || '';
+      const save = document.createElement('button'); save.type = 'button'; save.textContent = 'Save review';
+      save.addEventListener('click', async () => {
+        save.disabled = true;
+        try {
+          await getJson(`/api/tests/${encodeURIComponent(runId)}/${encodeURIComponent(result.id)}/review`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: select.value, note: note.value })
+          });
+          result.review_status = select.value; result.review_note = note.value;
+          save.textContent = 'Saved'; message.textContent = `Review saved for ${result.name}.`;
+        } catch (error) { message.textContent = error.message; save.textContent = 'Save review'; }
+        finally { save.disabled = false; }
+      });
+      review.append(select, document.createElement('br'), note, document.createElement('br'), save);
     }
-
-    function loadRuns() {
-      fetch('/api/tests/history')
-        .then(r => r.json())
-        .then(data => {
-          const table = document.getElementById('runsTable');
-          table.innerHTML = '';
-          if (data.data && data.data.length > 0) {
-            data.data.forEach(run => {
-              const row = table.insertRow();
-              row.innerHTML = `
-                <td>${new Date(run.timestamp).toLocaleString()}</td>
-                <td>${run.total_tests}</td>
-                <td class="pass">${run.passed}</td>
-                <td class="fail">${run.failed}</td>
-                <td>${Math.round(run.success_rate)}%</td>
-                <td>${run.duration_ms}ms</td>
-              `;
-            });
-          } else {
-            table.innerHTML = '<tr><td colspan="6" class="loading">No test runs yet</td></tr>';
-          }
-        });
+  }
+  async function loadRuns() {
+    const runs = await getJson('/api/tests/history');
+    runsTable.replaceChildren();
+    if (!runs.length) { const row = runsTable.insertRow(); cell(row, 'No test runs yet.').colSpan = 9; return; }
+    for (const run of runs) {
+      const row = runsTable.insertRow(); row.dataset.runId = run.id;
+      cell(row, new Date(run.timestamp + 'Z').toLocaleString());
+      cell(row, `${run.model_name || 'unknown'} / ${run.judge_name || 'no judge'}`);
+      cell(row, run.total_tests);
+      cell(row, run.passed, 'passed'); cell(row, run.failed, 'failed');
+      cell(row, run.inconclusive || 0, 'inconclusive'); cell(row, run.errors || 0, 'error');
+      cell(row, `${Math.round(run.success_rate || 0)}%`); cell(row, `${run.duration_ms} ms`);
+      row.addEventListener('click', () => showRun(run.id).catch((error) => { message.textContent = error.message; }));
     }
-
-    function runTests() {
-      const btn = event.target;
-      btn.disabled = true;
-      btn.textContent = 'Running...';
-      
-      fetch('/api/tests/run', { method: 'POST' })
-        .then(r => r.json())
-        .then(data => {
-          alert('Tests complete: ' + data.data.passed + ' passed, ' + data.data.failed + ' failed');
-          loadMetrics();
-          loadRuns();
-        })
-        .catch(e => alert('Error: ' + e.message))
-        .finally(() => {
-          btn.disabled = false;
-          btn.textContent = 'Run Tests';
-        });
-    }
-
-    loadMetrics();
-    loadRuns();
-    setInterval(() => { loadMetrics(); loadRuns(); }, 5000);
-  </script>
+  }
+  async function refresh() { await Promise.all([loadMetrics(), loadRuns()]); }
+  runButton.addEventListener('click', async () => {
+    runButton.disabled = true; runButton.textContent = 'Running…'; message.textContent = 'Sending test prompts to Ollama…';
+    try {
+      const result = await getJson('/api/tests/run', { method: 'POST' });
+      const judgeNote = result.judgeModel ? `Judge: ${result.judgeModel}.` : 'No distinct judge configured; verdicts remain inconclusive.';
+      message.textContent = `Run complete: ${result.passed} passed, ${result.failed} failed, ${result.inconclusive} inconclusive, ${result.errors} errors. ${judgeNote}`;
+      await refresh(); await showRun(result.runId);
+    } catch (error) { message.textContent = error.message; }
+    finally { runButton.disabled = false; runButton.textContent = 'Run Tests'; }
+  });
+  refresh().catch((error) => { message.textContent = error.message; });
+</script>
 </body>
 </html>
